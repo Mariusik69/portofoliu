@@ -1,0 +1,423 @@
+#include		<a_samp>
+#include   	 	<a_mysql>
+
+#define SCM 				SendClientMessage
+
+enum
+{
+	DIALOG_REGISTER,
+	DIALOG_LOGIN,
+	DIALOG_AGE,
+	DIALOG_SEX,
+	DIALOG_EMAIL
+};
+enum pInfo
+{
+	pID,
+	pPassword,
+	pAdmin,
+	pMoney,
+	pHelper
+};
+
+new PlayerInfo[MAX_PLAYERS][pInfo]; 
+new MySQL:g_Sql; 
+
+main(){}
+
+public OnGameModeInit()
+{
+	MySQLConnect();
+	SetGameModeText("GM v0.1");
+	AddPlayerClass(0, 1958.3783, 1343.1572, 15.3746, 269.1425, 0, 0, 0, 0, 0, 0);
+	return 1;
+}
+
+public OnGameModeExit()
+{
+	mysql_close( g_Sql );
+	return 1;
+}
+
+public OnPlayerRequestClass(playerid, classid)
+{
+	SetPlayerPos(playerid, 1958.3783, 1343.1572, 15.3746);
+	SetPlayerCameraPos(playerid, 1958.3783, 1343.1572, 15.3746);
+	SetPlayerCameraLookAt(playerid, 1958.3783, 1343.1572, 15.3746);
+	return 1;
+}
+
+public OnPlayerConnect(playerid)
+{
+	new query[100];
+	mysql_format(g_Sql, query, sizeof(query), "SELECT * FROM users WHERE Name = '%s'", GetName(playerid));
+	mysql_tquery(g_Sql, query, "OnPlayerLogin", "i", playerid);
+	return 1;
+}
+
+public OnPlayerDisconnect(playerid, reason)
+{
+	return 1;
+}
+
+public OnPlayerSpawn(playerid)
+{
+	return 1;
+}
+
+public OnPlayerDeath(playerid, killerid, reason)
+{
+	return 1;
+}
+
+public OnVehicleSpawn(vehicleid)
+{
+	return 1;
+}
+
+public OnVehicleDeath(vehicleid, killerid)
+{
+	return 1;
+}
+
+public OnPlayerText(playerid, text[])
+{
+	return 1;
+}
+
+public OnPlayerEnterVehicle(playerid, vehicleid, ispassenger)
+{
+	return 1;
+}
+
+public OnPlayerExitVehicle(playerid, vehicleid)
+{
+	return 1;
+}
+
+public OnPlayerStateChange(playerid, newstate, oldstate)
+{
+	return 1;
+}
+
+public OnPlayerEnterCheckpoint(playerid)
+{
+	return 1;
+}
+
+public OnPlayerLeaveCheckpoint(playerid)
+{
+	return 1;
+}
+
+public OnPlayerEnterRaceCheckpoint(playerid)
+{
+	return 1;
+}
+
+public OnPlayerLeaveRaceCheckpoint(playerid)
+{
+	return 1;
+}
+
+public OnRconCommand(cmd[])
+{
+	return 1;
+}
+
+public OnPlayerRequestSpawn(playerid)
+{
+	return 1;
+}
+
+public OnObjectMoved(objectid)
+{
+	return 1;
+}
+
+public OnPlayerObjectMoved(playerid, objectid)
+{
+	return 1;
+}
+
+public OnPlayerPickUpPickup(playerid, pickupid)
+{
+	return 1;
+}
+
+public OnVehicleMod(playerid, vehicleid, componentid)
+{
+	return 1;
+}
+
+public OnVehiclePaintjob(playerid, vehicleid, paintjobid)
+{
+	return 1;
+}
+
+public OnVehicleRespray(playerid, vehicleid, color1, color2)
+{
+	return 1;
+}
+
+public OnPlayerSelectedMenuRow(playerid, row)
+{
+	return 1;
+}
+
+public OnPlayerExitedMenu(playerid)
+{
+	return 1;
+}
+
+public OnPlayerInteriorChange(playerid, newinteriorid, oldinteriorid)
+{
+	return 1;
+}
+
+public OnPlayerKeyStateChange(playerid, newkeys, oldkeys)
+{
+	return 1;
+}
+
+public OnRconLoginAttempt(ip[], password[], success)
+{
+	return 1;
+}
+
+public OnPlayerUpdate(playerid)
+{
+	return 1;
+}
+
+public OnPlayerStreamIn(playerid, forplayerid)
+{
+	return 1;
+}
+
+public OnPlayerStreamOut(playerid, forplayerid)
+{
+	return 1;
+}
+
+public OnVehicleStreamIn(vehicleid, forplayerid)
+{
+	return 1;
+}
+
+public OnVehicleStreamOut(vehicleid, forplayerid)
+{
+	return 1;
+}
+
+public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
+{
+	new query[128], ip[25];
+	switch(dialogid)
+	{
+	    case DIALOG_REGISTER:
+	    {
+			if(!response) return Kick(playerid);
+			if(response)
+			{
+			    if(!strlen(inputtext)) return ShowPlayerDialog(playerid, DIALOG_REGISTER, DIALOG_STYLE_PASSWORD, "Parola Incorecta!", "Introdu-ti o parola pentru a te  inregistra pe server!", "Inregistreaza", "Exit");
+			    GetPlayerIp(playerid, ip, sizeof(ip));
+				SCM(playerid, -1, "Te rog sa-ti introduci varsta.");
+				mysql_format(g_Sql, query, sizeof(query), "INSERT INTO users (Name, Password, IP, Admin, Helper, Money) VALUES ('%s', '%e', '%s', '0','0','1500')", GetName(playerid), inputtext, ip);
+			    mysql_query(g_Sql, query);
+				ShowPlayerDialog(playerid, DIALOG_AGE, DIALOG_STYLE_INPUT, "Varsta!", "Te rog sa-ti introduci mai jos varsta.", "Continua", "Exit");
+			}
+			return 1;
+		}
+		case DIALOG_LOGIN:
+		{
+		    if(!response) return Kick(playerid);
+		    if(response)
+		    {
+				if(!strlen(inputtext)) return ShowPlayerDialog(playerid, DIALOG_LOGIN, DIALOG_STYLE_PASSWORD, "Parola Incorecta!", "Te rog sa-ti introduci parola corecta mai jos\nDaca ai uitat parola o poti recupera pe panel.", "Login", "Exit");
+				mysql_format(g_Sql, query, sizeof(query), "SELECT * FROM `users` WHERE `Name`='%e' AND `Password`='%s'", GetName(playerid), inputtext);
+				mysql_tquery(g_Sql, query, "OnLogin", "i", playerid);
+		    }
+		    return 1;
+		}
+		case DIALOG_AGE:
+		{
+		    if(!response) return ShowPlayerDialog(playerid, DIALOG_AGE, DIALOG_STYLE_INPUT, "Varsta!", "Te rog sa-ti introduci mai jos varsta.", "Continua", "Exit");
+		    if(response)
+		    {
+		    	if(!strlen(inputtext)) return ShowPlayerDialog(playerid, DIALOG_AGE, DIALOG_STYLE_INPUT, "Varsta!", "Te rog sa-ti introduci mai jos varsta.", "Continua", "Exit");
+				SCM(playerid, -1, "Te rog sa-ti introduci email-ul, pentru contact si a pentru a-ti putea recupera contul.");
+				mysql_format(g_Sql, query, sizeof(query), "UPDATE `users` SET `Age`='%e' WHERE `Name`='%e'", inputtext, GetName(playerid));
+				mysql_query(g_Sql, query);
+				ShowPlayerDialog(playerid, DIALOG_EMAIL, DIALOG_STYLE_INPUT, "Ëmail", "Te rog sa-ti introduci email-ul mai jos.", "Continua", "Exit");
+			}
+		    return 1;
+		}
+		case DIALOG_EMAIL:
+		{
+		    if(!response) return ShowPlayerDialog(playerid, DIALOG_EMAIL, DIALOG_STYLE_INPUT, "Ëmail", "Te rog sa-ti introduci email-ul mai jos.", "Continua", "Exit");
+		    if(response)
+		    {
+		        if(!strlen(inputtext)) return ShowPlayerDialog(playerid, DIALOG_EMAIL, DIALOG_STYLE_INPUT, "Ëmail", "Te rog sa-ti introduci email-ul mai jos.", "Continua", "Exit");
+		        SCM(playerid, -1, "Te rog sa-ti alegi sexul.");
+                mysql_format(g_Sql, query, sizeof(query), "UPDATE `users` SET `Email`='%e' WHERE `Name`='%e'", inputtext, GetName(playerid));
+				mysql_query(g_Sql, query);
+				ShowPlayerDialog(playerid, DIALOG_SEX, DIALOG_STYLE_MSGBOX, "Gen", "Te rog sa-ti alegi genul de mai jos.", "Masculin", "Feminin");
+		    }
+		    return 1;
+		}
+		case DIALOG_SEX:
+		{
+			if(response)
+			{
+                mysql_format(g_Sql, query, sizeof(query), "UPDATE `users` SET `Sex`='1' WHERE `Name`='%e'", GetName(playerid));
+				mysql_query(g_Sql, query);
+				SCM(playerid, -1, "Inregistrarea a fost un succes!");
+                ShowPlayerDialog(playerid, DIALOG_LOGIN, DIALOG_STYLE_PASSWORD, "Logheaza-te!", "Te rog sa-ti introduci parola mai jos", "Login", "Exit");
+			}
+			if(!response)
+			{
+			    mysql_format(g_Sql, query, sizeof(query), "UPDATE `users` SET `Sex`='0' WHERE `Name`='%e'", GetName(playerid));
+				mysql_query(g_Sql, query);
+				SCM(playerid, -1, "Inregistrarea a fost un succes!");
+                ShowPlayerDialog(playerid, DIALOG_LOGIN, DIALOG_STYLE_PASSWORD, "Logheaza-te!", "Te rog sa-ti introduci parola mai jos", "Login", "Exit");
+			}
+			return 1;
+		}
+	}
+	return 1;
+}
+
+public OnPlayerClickPlayer(playerid, clickedplayerid, source)
+{
+	return 1;
+}
+
+forward MySQLConnect();
+public MySQLConnect()
+{
+    g_Sql = mysql_connect("localhost", "root", "", "server");
+    if(mysql_errno() != 0)
+    {
+        printf("Connexiunea la baza de date nu a reusit";
+        SendRconCommand("exit");
+    }
+    else
+    {
+        printf("Conexiunea la baza de date a reusit";
+    }
+	return 1;
+}
+
+
+stock GetName(playerid)
+{
+	new Name[MAX_PLAYER_NAME];
+	GetPlayerName(playerid, Name, sizeof(Name));
+	return Name;
+}
+
+forward OnPlayerLogin(playerid);
+public OnPlayerLogin(playerid)
+{
+	new rows, fields;
+	cache_get_row_count(rows);
+	cache_get_field_count(fields);
+	if(rows)
+	{
+	    ShowPlayerDialog(playerid, DIALOG_LOGIN, DIALOG_STYLE_PASSWORD, "Logheaza-te!", "Te rog sa-ti introduci parola mai jos", "Login", "Exit");
+	}
+	else
+	{
+	    ShowPlayerDialog(playerid, DIALOG_REGISTER, DIALOG_STYLE_PASSWORD, "Inregistrare", "Trebuie sa iti creezi un cont pentru a juca pe server. \nTasteaza mai jos o paorla pentru a te inregistra.", "Inregistrare", "Exit");
+	}
+	return 1;
+}
+
+forward OnLogin(playerid);
+public OnLogin(playerid)
+{
+	new rows, fields, temporar[200];
+	cache_get_row_count(rows);
+	cache_get_field_count(fields);
+	if(rows)
+	{
+	    PlayerInfo[playerid][pPassword] = cache_get_value_name(0, "Password", temporar);
+	    PlayerInfo[playerid][pID] = cache_get_value_name(0, "ID", temporar);
+	    cache_get_value_int(0, "Money", PlayerInfo[playerid][pMoney]);
+	    SpawnPlayer(playerid);
+	}
+	else
+	{
+	    ShowPlayerDialog(playerid, DIALOG_LOGIN, DIALOG_STYLE_PASSWORD, "Parola Incorecta!", "Te rog sa-ti introduci parola corecta mai jos\nDaca ai uitat parola o poti recupera pe panel.", "Login", "Exit");
+	}
+	GivePlayerMoney(playerid, PlayerInfo[playerid][pMoney]);
+	return 1;
+}
+
+
+
+
+-- phpMyAdmin SQL Dump
+-- version 4.5.1
+-- http://www.phpmyadmin.net
+--
+-- Host: 127.0.0.1
+-- Generation Time: 28 Apr 2017 la 16:42
+-- Versiune server: 10.1.19-MariaDB
+-- PHP Version: 5.6.28
+
+SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+SET time_zone = "+00:00";
+
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8mb4 */;
+
+--
+-- Database: `mariusik`
+--
+
+-- --------------------------------------------------------
+
+--
+-- Structura de tabel pentru tabelul `users`
+--
+
+CREATE TABLE `users` (
+  `ID` int(10) NOT NULL,
+  `Name` varchar(25) NOT NULL,
+  `Password` varchar(25) NOT NULL,
+  `IP` varchar(16) NOT NULL,
+  `Money` int(11) NOT NULL,
+  `Admin` int(11) NOT NULL,
+  `Helper` int(11) NOT NULL,
+  `Age` int(11) NOT NULL,
+  `Email` varchar(30) NOT NULL,
+  `Sex` int(2) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+--
+-- Indexes for dumped tables
+--
+
+--
+-- Indexes for table `users`
+--
+ALTER TABLE `users`
+  ADD PRIMARY KEY (`ID`);
+
+--
+-- AUTO_INCREMENT for dumped tables
+--
+
+--
+-- AUTO_INCREMENT for table `users`
+--
+ALTER TABLE `users`
+  MODIFY `ID` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
