@@ -1,0 +1,80 @@
+enum pInfo {
+  pUnlocked,
+  pPin[5]
+}
+new PlayerInfo[MAX_PLAYERS][pInfo]
+
+public OnPlayerConnect(playerid)
+{
+  PlayerInfo[playerid][pUnlocked] = 0;
+  strdel(PlayerInfo[playerid][pPin], 5, "");
+  return 1;
+}
+public OnPlayerDisconnect(playerid)
+{
+  PlayerInfo[playerid][pUnlocked] = 0;
+  return 1;
+}
+
+public CheckAccount(playerid);
+public CheckAccount(playerid) {
+	new i;
+	if(PlayerInfo[playerid][pUnlocked] == 0 && (strlen(PlayerInfo[playerid][pPin]) > 0)) {
+		i = 0;
+	} else i = 1;
+	return i;
+}
+
+CMD:pin(playerid, params[])
+{
+	if(gPlayerLogged[playerid] == 0) return SendClientMessage(playerid, COLOR_LIGHTRED, "You need to login first.");
+	new pin[128];
+	if(PlayerInfo[playerid][pUnlocked] != 0) return SCM(playerid, COLOR_LIGHTRED, "You already unlocked your account.");
+	if(sscanf(params, "s[128]", pin)) return SCM(playerid, COLOR_SYN, "Syntax: /unlockacc <4-digit-code>");
+	if(strlen(pin) != 4) return SCM(playerid, COLOR_SYN, "Syntax: /unlockacc <4-digit-code>");
+	if(!IsNumeric(pin)) return SCM(playerid, COLOR_SYN, "Syntax: /unlockacc <4-digit-code>");
+	if(!strcmp(pin, PlayerInfo[playerid][pPin], true)) {
+		PlayerInfo[playerid][pUnlocked] = 1;
+		SCM(playerid, COLOR_LIGHTBLUE, "Contul tau a fost deblocat cu succes!");
+	} else {
+		SCM(playerid, COLOR_LIGHTRED, "Ai introdus un PIN gresit!");
+	}
+	return 1;
+}
+
+CMD:changepin(playerid, params[])
+{
+	if(gPlayerLogged[playerid] == 0) return SendClientMessage(playerid, COLOR_LIGHTRED, "You need to login first.");
+	new pin[128],pin2[128], string[128];
+	if(strlen(PlayerInfo[playerid][pPin]) == 0) return SCM(playerid, COLOR_LIGHTRED, "You don't have a pin code. Type [/addpin] to add one.");
+	if(sscanf(params, "s[128]s[128]", pin, pin2)) return SCM(playerid, COLOR_SYN, "Syntax: /changepin <current-pin> <4-digit-new-pin>");
+	if(!IsNumeric(pin)) return SCM(playerid, COLOR_SYN, "Syntax: /changepin <current-pin> <4-digit-new-pin>");
+	if(strlen(pin) != 4) return SCM(playerid, COLOR_SYN, "Syntax: /changepin <current-pin> <4-digit-new-pin>");
+	if(!IsNumeric(pin2)) return SCM(playerid, COLOR_SYN, "Syntax: /changepin <current-pin> <4-digit-new-pin>");
+	if(strlen(pin2) != 4) return SCM(playerid, COLOR_SYN, "Syntax: /changepin <current-pin> <4-digit-new-pin>");
+	if(strcmp(pin, PlayerInfo[playerid][pPin], true)) return SCM(playerid, COLOR_LIGHTRED, "You entered a wrong pin.");
+	string[0] = (EOS);
+	mysql_format(SQL, string, sizeof(string), "UPDATE `users` SET `Pin`='%s' WHERE `id`='%d'", pin2, PlayerInfo[playerid][pSQLID]);
+	mysql_query(SQL, string);
+	format(PlayerInfo[playerid][pPin], 5, "%s", pin2);
+	format(string, sizeof(string), "Your new security pin code is %s. Don't forget it!", pin2);
+	SCM(playerid, COLOR_LIGHTBLUE, string);
+	return 1;
+}
+ 
+CMD:addpin(playerid, params[])
+{
+	if(gPlayerLogged[playerid] == 0) return SendClientMessage(playerid, COLOR_LIGHTRED, "You need to login first.");
+	new pin[128], string[128];
+	if(strlen(PlayerInfo[playerid][pPin]) > 0) return SCM(playerid, COLOR_LIGHTRED, "You already have a pin code.");
+	if(sscanf(params, "s[128]", pin)) return SCM(playerid, COLOR_SYN, "Syntax: /addpin <4-digit-code>");
+	if(!IsNumeric(pin)) return SCM(playerid, COLOR_SYN, "Syntax: /addpin <4-digit-code>");
+	if(strlen(pin) != 4) return SCM(playerid, COLOR_SYN, "Syntax: /addpin <4-digit-code>");
+	string[0] = (EOS);
+	mysql_format(SQL, string, sizeof(string), "UPDATE `users` SET `Pin`='%s' WHERE `id`='%d'", pin, PlayerInfo[playerid][pSQLID]);
+	mysql_query(SQL, string);
+	format(PlayerInfo[playerid][pPin], 5, "%s", pin);
+	format(string, sizeof(string), "Your new security pin code is %s. Don't forget it!", pin);
+	SCM(playerid, COLOR_LIGHTBLUE, string);
+	return 1;
+}
